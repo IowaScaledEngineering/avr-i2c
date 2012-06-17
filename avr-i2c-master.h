@@ -28,8 +28,10 @@ LICENSE:
 // Application Specific Defines - these may need to be adjusted
 
 #define I2C_MAX_BUFFER_SIZE 8   // Set this to the largest message size that will be sent including address byte.
-#define I2C_TWBR            0x12        // I2C Bit rate Register setting.
-                                        // Se Application note for detailed 
+#define I2C_FREQ 400000
+#define I2C_TWBR ( ((F_CPU) / (2UL * (I2C_FREQ))) - 8UL)
+//#define I2C_TWBR            0x12        // I2C Bit rate Register setting.
+                                        // See Application note for detailed 
                                         // information on setting this value.
 
 #define I2C_vect            TWI_vect // This should match the ISR vector define of the part you're using
