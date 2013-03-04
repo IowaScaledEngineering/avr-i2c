@@ -22,8 +22,6 @@ LICENSE:
 
 *************************************************************************/
 
-void i2c_slave_init(uint8_t i2c_address, uint8_t i2c_all_call);
-
 #define I2CREG_ATTR_READONLY  0x01
 #define I2C_FREQ 400000
 #define I2C_TWBR ( ((F_CPU) / (2UL * (I2C_FREQ))) - 8UL)
@@ -74,5 +72,8 @@ typedef enum
 	I2C_BUS_ERROR              = 0x00  // Bus error due to an illegal START or STOP condition
 
 } I2CState;
+
+I2CState i2c_get_state(void);
+void i2c_slave_init(uint8_t i2c_address, uint8_t i2c_all_call);
 
 
