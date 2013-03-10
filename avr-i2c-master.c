@@ -54,7 +54,7 @@ ISR(I2C_vect)
 				if (i2c_status & _BV(I2C_MSG_OMIT_STOP))
 					TWCR = _BV(TWEN) | _BV(TWINT) | _BV(TWSTO);
 				else
-					TWCR = _BV(TWEN) | _BV(TWINT);
+					TWCR = _BV(TWINT);
 			}
 			break;
 
@@ -88,6 +88,8 @@ ISR(I2C_vect)
 		case I2C_MTX_ADR_NACK:      // SLA+W has been tramsmitted and NACK received
 		case I2C_MRX_ADR_NACK:      // SLA+R has been tramsmitted and NACK received    
 		case I2C_MTX_DATA_NACK:     // Data byte has been tramsmitted and NACK received
+			TWCR = _BV(TWEN) | _BV(TWINT) | _BV(TWSTO);
+			break;      
 		case I2C_BUS_ERROR:         // Bus error due to an illegal START or STOP condition
 		case I2C_NO_STATE:          // No relevant state information available; TWINT
 		default:     
