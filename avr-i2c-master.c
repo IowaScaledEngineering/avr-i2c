@@ -54,7 +54,7 @@ ISR(I2C_vect)
 				if (i2c_status & _BV(I2C_MSG_OMIT_STOP))
 					TWCR = _BV(TWEN) | _BV(TWINT) | _BV(TWSTO);
 				else
-					TWCR = _BV(TWINT);
+					TWCR = _BV(TWEN);
 			}
 			break;
 
