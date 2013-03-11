@@ -48,11 +48,11 @@ extern uint8_t i2c_state;      // State byte. Default set to I2C_NO_STATE.
 
 void i2c_master_init(void);
 uint8_t i2c_busy(void);
-void i2c_transmit(uint8_t *msgBuffer, uint8_t msgLen, uint8_t omitStop);
+void i2c_transmit(uint8_t *msgBuffer, uint8_t msgLen, uint8_t sendStop);
 uint8_t i2c_receive(uint8_t *msgBuffer, uint8_t msgLen);
 
 #define I2C_MSG_RECV_GOOD     0       // i2c_status, bit 0 shows last message is good
-#define I2C_MSG_OMIT_STOP     1       // i2c_status, omit stop at the end of transmit
+#define I2C_MSG_SEND_STOP     1       // i2c_status, omit stop at the end of transmit
 #define I2C_READ_BIT          0       // Bit 0 is Read / !Write in address
 
 /****************************************************************************

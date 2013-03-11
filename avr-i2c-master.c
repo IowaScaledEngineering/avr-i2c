@@ -126,7 +126,7 @@ from the slave. Also include how many bytes that should be sent/read including t
 The function will hold execution (loop) until the TWI_ISR has completed with the previous operation,
 then initialize the next operation and return.
 ****************************************************************************/
-void i2c_transmit(uint8_t *msgBuffer, uint8_t msgLen, uint8_t omitStop)
+void i2c_transmit(uint8_t *msgBuffer, uint8_t msgLen, uint8_t sendStop)
 {
 	// Wait until I2C isn't busy
 	while ( i2c_busy() );             
@@ -140,8 +140,8 @@ void i2c_transmit(uint8_t *msgBuffer, uint8_t msgLen, uint8_t omitStop)
 
 	i2c_state = I2C_NO_STATE;
 	i2c_status = 0;
-	if (omitStop)
-		i2c_status |= _BV(I2C_MSG_OMIT_STOP);
+	if (sendStop)
+		i2c_status |= _BV(I2C_MSG_SEND_STOP);
 	// Enable interrupts and issue a start condition
 	TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWINT) | _BV(TWSTA);
 }
