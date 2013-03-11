@@ -88,6 +88,8 @@ ISR(I2C_vect)
 		case I2C_MTX_ADR_NACK:      // SLA+W has been tramsmitted and NACK received
 		case I2C_MRX_ADR_NACK:      // SLA+R has been tramsmitted and NACK received    
 		case I2C_MTX_DATA_NACK:     // Data byte has been tramsmitted and NACK received
+			// Store TWSR and automatically sets clears noErrors bit.
+			i2c_state = TWSR;
 			TWCR = _BV(TWEN) | _BV(TWINT) | _BV(TWSTO);
 			break;      
 		case I2C_BUS_ERROR:         // Bus error due to an illegal START or STOP condition
@@ -96,7 +98,7 @@ ISR(I2C_vect)
 			// Store TWSR and automatically sets clears noErrors bit.
 			i2c_state = TWSR;
 			// Reset TWI Interface
-		   TWCR = _BV(TWEN);
+            TWCR = _BV(TWEN);
 			break;
 	}
 }
