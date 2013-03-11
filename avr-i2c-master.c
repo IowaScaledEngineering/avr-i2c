@@ -90,6 +90,7 @@ ISR(I2C_vect)
 		case I2C_MTX_DATA_NACK:     // Data byte has been tramsmitted and NACK received
 			// Store TWSR and automatically sets clears noErrors bit.
 			i2c_state = TWSR;
+			// Send stop to clear things out since slave NACK'd
 			TWCR = _BV(TWEN) | _BV(TWINT) | _BV(TWSTO);
 			break;      
 		case I2C_BUS_ERROR:         // Bus error due to an illegal START or STOP condition
