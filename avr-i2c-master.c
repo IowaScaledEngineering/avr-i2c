@@ -51,7 +51,7 @@ ISR(I2C_vect)
 			} else {                    // Send STOP after last byte
 				i2c_status |= _BV(I2C_MSG_RECV_GOOD);
 				// TWI Interface enabled, disable TWI Interrupt and clear the flag, send stop (if requested)
-				if (i2c_status & _BV(I2C_MSG_OMIT_STOP))
+				if (i2c_status & _BV(I2C_MSG_SEND_STOP))
 					TWCR = _BV(TWEN) | _BV(TWINT) | _BV(TWSTO);
 				else
 					TWCR = _BV(TWEN);
