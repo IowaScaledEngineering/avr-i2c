@@ -28,11 +28,11 @@ LICENSE:
 #include <avr/interrupt.h>
 #include "avr-i2c-master.h"
 
-uint8_t i2c_buffer[ I2C_MAX_BUFFER_SIZE ];    // Transceiver buffer
+volatile uint8_t i2c_buffer[ I2C_MAX_BUFFER_SIZE ];    // Transceiver buffer
 uint8_t i2c_bufferLen = 0;                   // Number of bytes to be transmitted.
-uint8_t i2c_bufferIdx = 0;
-uint8_t i2c_state = I2C_NO_STATE;      // State byte. Default set to I2C_NO_STATE.
-uint8_t i2c_status = 0;
+volatile uint8_t i2c_bufferIdx = 0;
+volatile uint8_t i2c_state = I2C_NO_STATE;      // State byte. Default set to I2C_NO_STATE.
+volatile uint8_t i2c_status = 0;
 
 ISR(I2C_vect)
 {
@@ -99,7 +99,7 @@ ISR(I2C_vect)
 			// Store TWSR and automatically sets clears noErrors bit.
 			i2c_state = TWSR;
 			// Reset TWI Interface
-            TWCR = _BV(TWEN);
+			TWCR = _BV(TWEN);
 			break;
 	}
 }
@@ -117,6 +117,11 @@ void i2c_master_init(void)
 uint8_t i2c_busy(void)
 {
 	return( TWCR & (_BV(TWIE)) );
+}
+
+uint8_t i2c_transaction_successful()
+{
+	return((i2c_status & (_BV(I2C_MSG_RECV_GOOD))) ? 1:0);
 }
 
 /****************************************************************************
@@ -154,7 +159,7 @@ uint8_t i2c_receive(uint8_t *msgBuffer, uint8_t msgLen)
 	if (i2c_status & (_BV(I2C_MSG_RECV_GOOD)))
 		memcpy(msgBuffer, i2c_buffer, msgLen);
 
-  return((i2c_status & (_BV(I2C_MSG_RECV_GOOD))) ? 1:0);
+	return((i2c_status & (_BV(I2C_MSG_RECV_GOOD))) ? 1:0);
 }
 
 

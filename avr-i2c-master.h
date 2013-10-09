@@ -38,10 +38,10 @@ LICENSE:
 
 #define I2C_vect            TWI_vect // This should match the ISR vector define of the part you're using
 
-extern uint8_t i2c_buffer[ I2C_MAX_BUFFER_SIZE ];    // Transceiver buffer
+extern volatile uint8_t i2c_buffer[ I2C_MAX_BUFFER_SIZE ];    // Transceiver buffer
 extern uint8_t i2c_bufferLen;                   // Number of bytes to be transmitted.
-extern uint8_t i2c_bufferIdx;
-extern uint8_t i2c_state;      // State byte. Default set to I2C_NO_STATE.
+extern volatile uint8_t i2c_bufferIdx;
+extern volatile uint8_t i2c_state;      // State byte. Default set to I2C_NO_STATE.
 
 
 // IF TWI Interrupt is enabled then the Transceiver is busy
@@ -50,6 +50,7 @@ void i2c_master_init(void);
 uint8_t i2c_busy(void);
 void i2c_transmit(uint8_t *msgBuffer, uint8_t msgLen, uint8_t sendStop);
 uint8_t i2c_receive(uint8_t *msgBuffer, uint8_t msgLen);
+uint8_t i2c_transaction_successful();
 
 #define I2C_MSG_RECV_GOOD     0       // i2c_status, bit 0 shows last message is good
 #define I2C_MSG_SEND_STOP     1       // i2c_status, omit stop at the end of transmit
