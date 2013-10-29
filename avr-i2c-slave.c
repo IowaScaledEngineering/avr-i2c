@@ -73,20 +73,26 @@ ISR(TWI_vect)
 			if (0 == i2c_rxIdx)
 			{
 				// First byte of a write, this will become our new register index
-				i2c_rxIdx = i2c_registerIdx = i;
-
+				i2c_registerIdx = i;
+				i2c_rxIdx++;
 			} else if (i2c_rxIdx >= i2c_registerMapSize) {
 				// NACK the SOB
 				if (255 != i2c_rxIdx)
 					i2c_rxIdx++;
+				if (255 != i2c_registerIdx)
+					i2c_registerIdx++;
+					
 
 			} else {
 				// Subsequent byte of a write.  If register marked writable, write it
-				if (!(i2c_registerAttributes[i2c_rxIdx] & I2CREG_ATTR_READONLY))
-					i2c_registerMap[i2c_rxIdx]	= i;
+				if (!(i2c_registerAttributes[i2c_registerIdx] & I2CREG_ATTR_READONLY))
+					i2c_registerMap[i2c_registerIdx]	= i;
 
 				if (255 != i2c_rxIdx)
 					i2c_rxIdx++;
+					
+				if (255 != i2c_registerIdx)
+					i2c_registerIdx++;
 			}
 				
 			TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWINT) | _BV(TWEA);
