@@ -8,9 +8,6 @@
 extern volatile uint8_t i2c_registerMap[];
 extern volatile uint8_t i2c_registerAttributes[];
 extern uint8_t i2c_registerMapSize;
-static volatile uint8_t i2c_registerIdx=0;
-static uint8_t i2c_rxIdx=0;
-static uint8_t i2c_txIdx=0;
  
 volatile I2CState i2c_state = I2C_NO_STATE;  // State byte. Default set to I2C_NO_STATE.
 
@@ -41,6 +38,10 @@ I2CState i2c_get_state(void)
 
 ISR(TWI_vect)
 {
+	static uint8_t i2c_rxIdx=0;
+	static uint8_t i2c_txIdx=0;
+	static uint8_t i2c_registerIdx=0;
+
 	uint8_t i;
 	switch (TWSR)
 	{
