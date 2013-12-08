@@ -26,9 +26,10 @@ LICENSE:
 #include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 #include "avr-i2c-master.h"
 
-volatile uint8_t i2c_buffer[ I2C_MAX_BUFFER_SIZE ];    // Transceiver buffer
+volatile uint8_t i2c_buffer[I2C_MAX_BUFFER_SIZE];    // Transceiver buffer
 uint8_t i2c_bufferLen = 0;                   // Number of bytes to be transmitted.
 volatile uint8_t i2c_bufferIdx = 0;
 volatile uint8_t i2c_state = I2C_NO_STATE;      // State byte. Default set to I2C_NO_STATE.
@@ -136,17 +137,21 @@ void i2c_transmit(uint8_t *msgBuffer, uint8_t msgLen, uint8_t sendStop)
 	// Wait until I2C isn't busy
 	while ( i2c_busy() );             
 
-	// Number of data bytes to transmit
-	i2c_bufferLen = msgLen;
-	i2c_buffer[0] = msgBuffer[0];  // Destination slave address with R/W bit
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
+		// Number of data bytes to transmit
+		i2c_bufferLen = msgLen;
+		i2c_buffer[0] = msgBuffer[0];  // Destination slave address with R/W bit
 
-	if (!(i2c_buffer[0] & (_BV(I2C_READ_BIT))))  // If it's a write, copy the rest of the bytes
-		memcpy(i2c_buffer+1, msgBuffer+1, msgLen-1);
 
-	i2c_state = I2C_NO_STATE;
-	i2c_status = 0;
-	if (sendStop)
-		i2c_status |= _BV(I2C_MSG_SEND_STOP);
+		if (!(i2c_buffer[0] & (_BV(I2C_READ_BIT))))  // If it's a write, copy the rest of the bytes
+			memcpy((uint8_t*)i2c_buffer+1, msgBuffer+1, msgLen-1);
+
+		i2c_state = I2C_NO_STATE;
+		i2c_status = 0;
+		if (sendStop)
+			i2c_status |= _BV(I2C_MSG_SEND_STOP);
+	}
 	// Enable interrupts and issue a start condition
 	TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWINT) | _BV(TWSTA);
 }
@@ -155,9 +160,11 @@ uint8_t i2c_receive(uint8_t *msgBuffer, uint8_t msgLen)
 {
 	// Wait until I2C isn't busy
 	while ( i2c_busy() );
-
-	if (i2c_status & (_BV(I2C_MSG_RECV_GOOD)))
-		memcpy(msgBuffer, i2c_buffer, msgLen);
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
+		if (i2c_status & (_BV(I2C_MSG_RECV_GOOD)))
+			memcpy(msgBuffer, (uint8_t*)i2c_buffer, msgLen);
+	}
 
 	return((i2c_status & (_BV(I2C_MSG_RECV_GOOD))) ? 1:0);
 }
