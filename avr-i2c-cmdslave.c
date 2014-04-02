@@ -217,7 +217,7 @@ ISR(TWI_vect)
 			else if(0 == i2c_registerMap[i2c_registerMapIndex].readBytes)
 			{
 				// Send byte command (write only)
-				i2c_status |= I2C_STATUS_CML_I2C_FAULT;
+				i2c_status |= STATUS_CML_I2C_FAULT;
 				TWDR = 0xFF;  // Drive 0xFF so bus is released
 				i2c_txIdx++;
 			}
@@ -234,7 +234,7 @@ ISR(TWI_vect)
 				if( IS_PAGED && (0xFF == I2C_PAGE[0]) )
 				{
 					// Handles reads of data from paged registers with PAGE = 0xFF (illegal)
-					i2c_status |= I2C_STATUS_CML_DATA_FAULT;
+					i2c_status |= STATUS_CML_DATA_FAULT;
 					TWDR = 0x00;
 				}
 				else
@@ -261,7 +261,7 @@ ISR(TWI_vect)
 			else
 			{
 				// Too many bytes read, set status
-				i2c_status |= I2C_STATUS_CML_I2C_FAULT;
+				i2c_status |= STATUS_CML_I2C_FAULT;
 				TWDR = 0xFF;  // Drive 0xFF so bus is released
 				i2c_txIdx++;
 			}
@@ -294,7 +294,7 @@ ISR(TWI_vect)
 				if(I2C_UNSUPPORTED == i2c_registerIndex[i2c_command.code])
 				{
 					// Set error if unsupported
-					i2c_status |= I2C_STATUS_CML_CMD_FAULT;
+					i2c_status |= STATUS_CML_CMD_FAULT;
 				}
 				else
 				{
@@ -319,13 +319,13 @@ ISR(TWI_vect)
 						// PEC doesn't match and it's a writeable command or a send byte command - throw an error
 						if( !(i2c_state & I2C_STATE_ERROR) )
 						{
-							i2c_status |= I2C_STATUS_CML_PEC_FAULT;
+							i2c_status |= STATUS_CML_PEC_FAULT;
 						}
 					}
 					else if( (0 == i2c_registerMap[i2c_registerMapIndex].writeBytes) && (i2c_registerMap[i2c_registerMapIndex].readBytes > 0) )
 					{
 						// Read-only command - throw a different error
-						i2c_status |= I2C_STATUS_CML_DATA_FAULT;
+						i2c_status |= STATUS_CML_DATA_FAULT;
 					}
 				}
 				else
@@ -333,7 +333,7 @@ ISR(TWI_vect)
 					// Beyond PEC, throw an error (unless already flagged as PEC mismatch)
 					if( !(i2c_state & I2C_STATE_ERROR) )
 					{
-						i2c_status |= I2C_STATUS_CML_DATA_FAULT;
+						i2c_status |= STATUS_CML_DATA_FAULT;
 					}
 				}
 			}
@@ -342,7 +342,7 @@ ISR(TWI_vect)
 				// Block length
 				if(data > i2c_registerMap[i2c_registerMapIndex].writeBytes)
 				{
-					i2c_status |= I2C_STATUS_CML_DATA_FAULT;
+					i2c_status |= STATUS_CML_DATA_FAULT;
 				}
 				writeBytes = data + 1;  // Save length from block write command, add one to account for length byte
 				i2c_calculatePec(data);
@@ -353,12 +353,12 @@ ISR(TWI_vect)
 				if( (0x00 == i2c_registerMap[i2c_registerMapIndex].cmdCode) && (data >= I2C_NUMPAGES) && (data < 0xFF) )
 				{
 					// Special handling of a write to PAGE with an illegal value but allows 0xFF
-					i2c_status |= I2C_STATUS_CML_DATA_FAULT;
+					i2c_status |= STATUS_CML_DATA_FAULT;
 				}
 				else if( IS_PAGED && (0xFF == I2C_PAGE[0]) )
 				{
 					// Handles writes of data to paged registers with PAGE = 0xFF (illegal)
-					i2c_status |= I2C_STATUS_CML_DATA_FAULT;
+					i2c_status |= STATUS_CML_DATA_FAULT;
 				}
 				else
 				{

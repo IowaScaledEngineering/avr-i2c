@@ -77,10 +77,10 @@ uint8_t i2cCmdQueuePop(CmdBuffer* data);
 #define I2C_STATE_ERROR         0x01
 
 // Command specific defines
-#define I2C_STATUS_CML_CMD_FAULT   0x80
-#define I2C_STATUS_CML_DATA_FAULT  0x40
-#define I2C_STATUS_CML_PEC_FAULT   0x20
-#define I2C_STATUS_CML_I2C_FAULT   0x02
+#define STATUS_CML_CMD_FAULT   0x80
+#define STATUS_CML_DATA_FAULT  0x40
+#define STATUS_CML_PEC_FAULT   0x20
+#define STATUS_CML_I2C_FAULT   0x02
 
 
 /****************************************************************************
