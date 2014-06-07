@@ -46,12 +46,17 @@ LICENSE:
 // I2C configuration provided by the application
 extern i2cCommand i2c_registerMap[];
 extern volatile uint8_t i2c_registerIndex[];
-#ifdef I2C_ENABLE_PAGE
 // Required commands since the library uses them
+#ifdef I2C_ENABLE_PAGE
 extern volatile uint8_t I2C_PAGE[1];
 #else
 volatile uint8_t I2C_PAGE[1];
 #endif // I2C_ENABLE_PAGE
+#ifdef I2C_ENABLE_STATUS_WORD
+extern volatile uint16_t I2C_STATUS_WORD[I2C_NUMPAGES];
+#else
+volatile uint8_t I2C_STATUS_WORD[I2C_NUMPAGES];
+#endif // I2C_ENABLE_STATUS_WORD
 #ifdef I2C_ENABLE_CML
 extern volatile uint8_t I2C_STATUS_CML[1];
 #else
@@ -61,8 +66,11 @@ volatile uint8_t I2C_STATUS_CML[1];
 // Some helper macros
 #ifdef I2C_ENABLE_PAGE
 #define IS_PAGED           (i2c_registerMap[i2c_registerMapIndex].attributes & I2C_PAGED)
+#else
+#define IS_PAGED           (0)
 #endif
 #define IS_BLOCKCMD        (i2c_registerMap[i2c_registerMapIndex].attributes & I2C_BLOCK)
+#define IS_LBLOCK          (i2c_registerMap[i2c_registerMapIndex].attributes & I2C_LEN)
 
 // Internal index to the i2c_registerMap array
 static volatile uint8_t i2c_registerMapIndex;
@@ -224,7 +232,16 @@ ISR(TWI_vect)
 			else if( IS_BLOCKCMD && (1 == i2c_txIdx) )
 			{
 				// Block read.  Return # of bytes.
-				data = i2c_registerMap[i2c_registerMapIndex].readBytes;
+				if(IS_LBLOCK)
+				{
+					uint16_t pageOffset;  // 16 bits to handle word reads with page > 127
+					pageOffset = (IS_PAGED ? (I2C_PAGE[0] * (i2c_registerMap[i2c_registerMapIndex].readBytes + (IS_LBLOCK?1:0))) : 0);
+					data = *(i2c_registerMap[i2c_registerMapIndex].ramAddr + pageOffset);
+				}
+				else
+				{
+					data = i2c_registerMap[i2c_registerMapIndex].readBytes;
+				}
 				TWDR = data;
 				i2c_calculatePec(data);
 				i2c_txIdx++;
@@ -240,12 +257,14 @@ ISR(TWI_vect)
 				else
 				{
 					uint16_t pageOffset;  // 16 bits to handle word reads with page > 127
-					pageOffset = (IS_PAGED ? (I2C_PAGE[0] * i2c_registerMap[i2c_registerMapIndex].readBytes) : 0);
+					pageOffset = (IS_PAGED ? (I2C_PAGE[0] * (i2c_registerMap[i2c_registerMapIndex].readBytes + (IS_LBLOCK?1:0))) : 0);
+					if(i2c_registerMap[i2c_registerMapIndex].attributes & I2C_SKIP_BYTE)
+						pageOffset *= 2;  // Read byte size registers from word size source
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-					data = *(i2c_registerMap[i2c_registerMapIndex].ramAddr + txIndex - 1 + pageOffset);
+					data = *(i2c_registerMap[i2c_registerMapIndex].ramAddr + pageOffset + (IS_LBLOCK?1:0) + txIndex - 1);
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 					// Mangle byte order since SMBus sends lowest byte first - Read from end to the beginning
-					data = *(i2c_registerMap[i2c_registerMapIndex].ramAddr + i2c_registerMap[i2c_registerMapIndex].readBytes - txIndex + pageOffset);
+					data = *(i2c_registerMap[i2c_registerMapIndex].ramAddr + pageOffset + i2c_registerMap[i2c_registerMapIndex].readBytes + (IS_LBLOCK?1:0) - txIndex);
 #endif
 					TWDR = data;
 					i2c_calculatePec(data);
@@ -390,14 +409,18 @@ ISR(TWI_vect)
 					// We received at least the correct amount of data (extra beyond PEC gets flagged as error), so write to actual register
 					uint8_t i;
 					uint16_t pageOffset;  // 16 bits to handle word writes with page > 127
-					pageOffset = (IS_PAGED ? (I2C_PAGE[0] * i2c_registerMap[i2c_registerMapIndex].writeBytes) : 0);
+					pageOffset = (IS_PAGED ? (I2C_PAGE[0] * (i2c_registerMap[i2c_registerMapIndex].writeBytes + (IS_LBLOCK?1:0))) : 0);
+					if(IS_LBLOCK)
+					{
+						*(i2c_registerMap[i2c_registerMapIndex].ramAddr + pageOffset) = writeBytes - 1;  // Store length in first byte
+					}
 					for(i=0; i<(IS_BLOCKCMD?writeBytes-1:writeBytes); i++)  // Copy only the number of bytes written.  Subtract one for length byte in block commands
 					{
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-						*(i2c_registerMap[i2c_registerMapIndex].ramAddr + i + pageOffset) = i2c_buffer[i];
+						*(i2c_registerMap[i2c_registerMapIndex].ramAddr + pageOffset + (IS_LBLOCK?1:0) + i) = i2c_buffer[i];
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 						// Unmangle byte order since SMBus sends lowest byte first - Write from end to the beginning
-						*(i2c_registerMap[i2c_registerMapIndex].ramAddr + i2c_registerMap[i2c_registerMapIndex].writeBytes - i - 1 + pageOffset) = i2c_buffer[i];
+						*(i2c_registerMap[i2c_registerMapIndex].ramAddr + pageOffset + i2c_registerMap[i2c_registerMapIndex].writeBytes + (IS_LBLOCK?1:0) - 1 - i) = i2c_buffer[i];
 #endif
 					}
 				}
@@ -423,6 +446,13 @@ ISR(TWI_vect)
 	{
 		// We just set status so update it
 		I2C_STATUS_CML[0] |= i2c_status;
+#ifdef I2C_ENABLE_STATUS_WORD
+		uint8_t i;
+		for(i=0; i<I2C_NUMPAGES; i++)
+		{
+			I2C_STATUS_WORD[i] |= STATUS_WORD_CML;
+		}
+#endif
 		i2c_state |= I2C_STATE_ERROR;
 	}
 }

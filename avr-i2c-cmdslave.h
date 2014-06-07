@@ -66,8 +66,17 @@ uint8_t i2cCmdQueuePop(CmdBuffer* data);
 
 
 // Defines for i2cCommand attributes
+// PAGED     = command is paged
+// NVM       = Stored in NVM
+// SKIP_BYTE = Skip bytes in memory; used for byte versions of word commands (e.g. STATUS_WORD / STATUS_BYTE)
+// ASCII     = ASCII type commands
+// LEN       = Store length of block written in memory
+// BLOCK     = Block command
 #define I2C_PAGED              0x80
-#define I2C_ASCII              0x02
+#define I2C_NVM                0x40
+#define I2C_SKIP_BYTE          0x10
+#define I2C_ASCII              0x08
+#define I2C_LEN                0x02
 #define I2C_BLOCK              0x01
 
 // Defines for i2c_registerIndex
@@ -82,6 +91,13 @@ uint8_t i2cCmdQueuePop(CmdBuffer* data);
 #define STATUS_CML_PEC_FAULT   0x20
 #define STATUS_CML_I2C_FAULT   0x02
 
+#ifdef I2C_ENABLE_STATUS_WORD
+#define STATUS_WORD_HIGH_BYTE  0x0001
+#define STATUS_WORD_CML        0x0002
+#define STATUS_WORD_TEMP       0x0004
+#define STATUS_WORD_BUSY       0x0080
+#define STATUS_WORD_MFR        0x1000
+#endif
 
 /****************************************************************************
   TWI State codes
