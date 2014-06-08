@@ -34,6 +34,8 @@ LICENSE:
 
 *************************************************************************/
 
+// FIXME: Although mostly PEC independent, the lib currently has no way to *require* PEC on writes
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
