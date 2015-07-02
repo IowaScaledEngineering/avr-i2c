@@ -30,7 +30,10 @@ LICENSE:
 #ifndef I2C_MAX_BUFFER_SIZE
 #define I2C_MAX_BUFFER_SIZE 16   // Set this to the largest message size that will be sent including address byte.
 #endif
+
+#ifndef I2C_FREQ
 #define I2C_FREQ 400000
+#endif
 #define I2C_TWBR ( ((F_CPU) / (2UL * (I2C_FREQ))) - 8UL)
 //#define I2C_TWBR            0x12        // I2C Bit rate Register setting.
                                         // See Application note for detailed 
