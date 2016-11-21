@@ -34,10 +34,12 @@ LICENSE:
 #ifndef I2C_FREQ
 #define I2C_FREQ 400000
 #endif
-#define I2C_TWBR ( ((F_CPU) / (2UL * (I2C_FREQ))) - 8UL)
-//#define I2C_TWBR            0x12        // I2C Bit rate Register setting.
-                                        // See Application note for detailed 
-                                        // information on setting this value.
+
+#ifndef I2C_TWSR
+#define I2C_TWSR 0  // Prescaler - 0=1x, 1=4x, 2=16x, 3=64x
+#endif
+
+#define I2C_TWBR (((F_CPU) / (2UL * (I2C_FREQ))) - 8UL)  // This only works if prescaler = 0
 
 #define I2C_vect            TWI_vect // This should match the ISR vector define of the part you're using
 

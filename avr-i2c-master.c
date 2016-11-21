@@ -37,7 +37,7 @@ volatile uint8_t i2c_status = 0;
 
 ISR(I2C_vect)
 {
-	switch (TWSR)
+	switch (TWSR & 0xFC)
 	{
 		case I2C_START:             // START has been transmitted  
 		case I2C_REP_START:         // Repeated START has been transmitted
@@ -90,7 +90,7 @@ ISR(I2C_vect)
 		case I2C_MRX_ADR_NACK:      // SLA+R has been tramsmitted and NACK received    
 		case I2C_MTX_DATA_NACK:     // Data byte has been tramsmitted and NACK received
 			// Store TWSR and automatically sets clears noErrors bit.
-			i2c_state = TWSR;
+			i2c_state = TWSR & 0xFC;
 			// Send stop to clear things out since slave NACK'd
 			TWCR = _BV(TWEN) | _BV(TWINT) | _BV(TWSTO);
 			break;      
@@ -98,7 +98,7 @@ ISR(I2C_vect)
 		case I2C_NO_STATE:          // No relevant state information available; TWINT
 		default:     
 			// Store TWSR and automatically sets clears noErrors bit.
-			i2c_state = TWSR;
+			i2c_state = TWSR & 0xFC;
 			// Reset TWI Interface
 			TWCR = _BV(TWEN);
 			break;
@@ -110,7 +110,7 @@ void i2c_master_init(void)
 	i2c_status = 0;
 	i2c_state = I2C_NO_STATE;
 	TWBR = I2C_TWBR;                                  // Set bit rate register (Baudrate). Defined in header file.
-// TWSR = TWI_TWPS;                                  // Not used. Driver presumes prescaler to be 00.
+	TWSR = I2C_TWSR;                                  // Prescaler
 	TWDR = 0xFF;                                      // Default content = SDA released.
 	TWCR = _BV(TWEN);
 }    
